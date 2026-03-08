@@ -1,0 +1,8 @@
+{
+  "name": "Copy of Copy of Ancestry Waterfall - Rev B.b",
+  "description": "A high-end interactive family tree application featuring real-time node management, social features, and AI-powered visual face matching.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
