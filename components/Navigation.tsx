@@ -1,13 +1,19 @@
 
 import React, { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 
 const Navigation: React.FC = () => {
   // Mocking notification count for demonstration
   const [unreadCount] = useState(2);
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // In a real app, you would clear auth tokens here
+    navigate('/');
+  };
 
   const navItems = [
-    { path: '/', icon: 'fa-sitemap', label: 'Tree' },
+    { path: '/app', icon: 'fa-sitemap', label: 'Tree' },
     { path: '/social', icon: 'fa-earth-americas', label: 'Feed' },
     { path: '/messages', icon: 'fa-comments', label: 'Chat' },
     { path: '/profile/1', icon: 'fa-user-circle', label: 'Profile' },
@@ -32,7 +38,7 @@ const Navigation: React.FC = () => {
           </span>
         </NavLink>
       ))}
-      <div className="mt-auto">
+      <div className="mt-auto flex flex-col gap-4">
         <NavLink 
           to="/notifications"
           className={({ isActive }) => 
@@ -48,6 +54,13 @@ const Navigation: React.FC = () => {
             </span>
           )}
         </NavLink>
+        <button 
+          onClick={handleLogout}
+          className="w-10 h-10 flex items-center justify-center text-emerald-50 hover:bg-rose-600 hover:text-white transition-colors rounded-xl"
+          title="Logout"
+        >
+          <i className="fa-solid fa-right-from-bracket text-lg"></i>
+        </button>
       </div>
     </nav>
   );

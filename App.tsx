@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useRef } from 'react';
-import { HashRouter, Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
+import { HashRouter, Routes, Route, Navigate, useNavigate, Link, useLocation } from 'react-router-dom';
 import TreeView from './components/TreeView';
 import ProfilePage from './components/ProfilePage';
 import Navigation from './components/Navigation';
@@ -9,6 +9,9 @@ import Messaging from './components/Messaging';
 import SettingsPage from './components/SettingsPage';
 import NotificationsPage from './components/NotificationsPage';
 import TutorialGuide from './components/TutorialGuide';
+import HeroPage from './components/auth/HeroPage';
+import SignupPage from './components/auth/SignupPage';
+import PermissionModal from './components/auth/PermissionModal';
 import { FamilyMember, TreeMembership } from './types';
 import { getRelativeRelationship } from './components/kinship';
 import { GoogleGenAI, Type } from "@google/genai";
@@ -401,18 +404,36 @@ const HeaderSearch = ({ members, currentUserId }: { members: FamilyMember[], cur
   );
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [members, setMembers] = useState<FamilyMember[]>(INITIAL_MEMBERS);
   const [currentUser] = useState<FamilyMember>(INITIAL_MEMBERS[0]);
   const [isTreePrivate, setIsTreePrivate] = useState(true);
   const [isTutorialOpen, setIsTutorialOpen] = useState(false);
+  const [showPermissionModal, setShowPermissionModal] = useState(false);
+  const location = useLocation();
+  const isAuthPage = location.pathname === '/' || location.pathname === '/signup';
 
   useEffect(() => {
-    const hasSeenTutorial = localStorage.getItem('hasSeenGenMapTutorial');
-    if (!hasSeenTutorial) {
-      setIsTutorialOpen(true);
+    if (location.state?.isNewUser) {
+      setShowPermissionModal(true);
+      window.history.replaceState({}, document.title);
+    } else {
+      const hasSeenTutorial = localStorage.getItem('hasSeenGenMapTutorial');
+      if (!hasSeenTutorial) {
+        setIsTutorialOpen(true);
+      }
     }
-  }, []);
+  }, [location.state]);
+
+  const handlePermissionGranted = async () => {
+    try {
+      await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch (err) {
+      console.error("Permission denied", err);
+    }
+    setShowPermissionModal(false);
+    setIsTutorialOpen(true);
+  };
 
   const handleCloseTutorial = () => {
     setIsTutorialOpen(false);
@@ -424,17 +445,18 @@ const App: React.FC = () => {
   };
 
   return (
-    <HashRouter>
-      <div className="flex flex-col h-screen w-screen overflow-hidden waterfall-bg transition-colors duration-300">
-        <TutorialGuide isOpen={isTutorialOpen} onClose={handleCloseTutorial} />
-        
+    <div className="flex flex-col h-screen w-screen overflow-hidden waterfall-bg transition-colors duration-300">
+      {showPermissionModal && <PermissionModal onClose={() => { setShowPermissionModal(false); setIsTutorialOpen(true); }} onGrant={handlePermissionGranted} />}
+      {!isAuthPage && <TutorialGuide isOpen={isTutorialOpen} onClose={handleCloseTutorial} />}
+      
+      {!isAuthPage && (
         <header id="app-header" className="absolute top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 bg-white/40 dark:bg-stone-950/40 backdrop-blur-md border-b border-stone-200 dark:border-stone-800">
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-[10px] font-black tracking-[0.2em] text-emerald-600 dark:text-emerald-400">GENMAP</span>
                 <div className="w-px h-3 bg-stone-300 dark:bg-stone-700"></div>
-                <Link to="/" className="text-xl font-bold text-emerald-700 dark:text-emerald-500 flex items-center gap-2">
+                <Link to="/app" className="text-xl font-bold text-emerald-700 dark:text-emerald-500 flex items-center gap-2">
                   <i className="fa-solid fa-tree text-amber-500"></i>
                   Sterling Family Legacy
                 </Link>
@@ -464,21 +486,31 @@ const App: React.FC = () => {
             </div>
           </div>
         </header>
+      )}
 
-        <Navigation />
+      {!isAuthPage && <Navigation />}
 
-        <main className="flex-1 relative overflow-hidden ml-16 mt-16 h-full">
-          <Routes>
-            <Route path="/" element={<TreeView members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
-            <Route path="/profile/:id" element={<ProfilePage members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
-            <Route path="/social" element={<SocialFeed members={members} />} />
-            <Route path="/messages" element={<Messaging members={members} />} />
-            <Route path="/notifications" element={<NotificationsPage members={members} />} />
-            <Route path="/settings" element={<SettingsPage onRestartTutorial={handleRestartTutorial} />} />
-            <Route path="*" element={<Navigate to="/" />} />
-          </Routes>
-        </main>
-      </div>
+      <main className={`flex-1 relative overflow-hidden ${!isAuthPage ? 'ml-16 mt-16' : ''} h-full`}>
+        <Routes>
+          <Route path="/" element={<HeroPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/app" element={<TreeView members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
+          <Route path="/profile/:id" element={<ProfilePage members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
+          <Route path="/social" element={<SocialFeed members={members} />} />
+          <Route path="/messages" element={<Messaging members={members} />} />
+          <Route path="/notifications" element={<NotificationsPage members={members} />} />
+          <Route path="/settings" element={<SettingsPage onRestartTutorial={handleRestartTutorial} />} />
+          <Route path="*" element={<Navigate to="/" />} />
+        </Routes>
+      </main>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <HashRouter>
+      <AppContent />
     </HashRouter>
   );
 };

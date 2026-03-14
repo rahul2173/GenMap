@@ -1,5 +1,5 @@
 
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useLayoutEffect, useCallback } from 'react';
 import { FamilyMember, RelationType, GenderType } from '../types';
 import { getRelativeRelationship } from './kinship';
 import FamilyNode from './FamilyNode';
@@ -45,6 +45,24 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
 
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const handleCenterOnUser = useCallback(() => {
+    const currentUser = members.find(m => m.id === currentUserId);
+    if (!currentUser || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    setScale(1);
+    setOffset({
+      x: centerX - currentUser.x,
+      y: centerY - currentUser.y
+    });
+  }, [members, currentUserId]);
+
+  useLayoutEffect(() => {
+    handleCenterOnUser();
+  }, [handleCenterOnUser]);
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button === 0 && !dragConnection && !placementPreview && !draggingNodeId) {
       setIsPanning(true);
@@ -297,21 +315,6 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
       setUndoSnapshot(null);
       setUndoActionType(null);
     }, 5000);
-  };
-
-  const handleCenterOnUser = () => {
-    const currentUser = members.find(m => m.id === currentUserId);
-    if (!currentUser || !containerRef.current) return;
-
-    const rect = containerRef.current.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
-
-    setScale(1);
-    setOffset({
-      x: centerX - currentUser.x,
-      y: centerY - currentUser.y
-    });
   };
 
   const finalizeAddMember = (data: { firstName: string, lastName: string, gender: GenderType, channel: string }) => {
