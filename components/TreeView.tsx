@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { FamilyMember, RelationType } from '../types';
+import { FamilyMember, RelationType, GenderType } from '../types';
+import { getRelativeRelationship } from './kinship';
 import FamilyNode from './FamilyNode';
 import RelationshipLines from './RelationshipLines';
 import VerificationModal from './VerificationModal';
@@ -40,7 +41,7 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
   const [undoSnapshot, setUndoSnapshot] = useState<FamilyMember[] | null>(null);
   const [undoActionType, setUndoActionType] = useState<'add' | 'delete' | 'move' | 'disconnect' | 'reset' | null>(null);
   const undoTimeoutRef = useRef<number | null>(null);
-  const [showLegend, setShowLegend] = useState(true);
+  const [showLegend, setShowLegend] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -298,7 +299,22 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
     }, 5000);
   };
 
-  const finalizeAddMember = (data: { firstName: string, lastName: string, channel: string }) => {
+  const handleCenterOnUser = () => {
+    const currentUser = members.find(m => m.id === currentUserId);
+    if (!currentUser || !containerRef.current) return;
+
+    const rect = containerRef.current.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    setScale(1);
+    setOffset({
+      x: centerX - currentUser.x,
+      y: centerY - currentUser.y
+    });
+  };
+
+  const finalizeAddMember = (data: { firstName: string, lastName: string, gender: GenderType, channel: string }) => {
     if (!showVerification) return;
 
     const newId = Math.random().toString(36).substr(2, 9);
@@ -306,6 +322,7 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
       id: newId,
       firstName: data.firstName,
       lastName: data.lastName,
+      gender: data.gender,
       role: showVerification.type?.toUpperCase() || 'MEMBER',
       avatar: `https://picsum.photos/seed/${data.firstName + newId}/200/200`,
       isVerified: false,
@@ -363,127 +380,8 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
     }
   };
 
-  const getRelativeRelationship = (targetId: string): string => {
-    if (targetId === currentUserId) return 'You';
-    
-    // Breadth-first search to find shortest path of relationships
-    const queue: { id: string, path: RelationType[] }[] = [{ id: currentUserId, path: [] }];
-    const visited = new Map<string, RelationType[]>();
-    visited.set(currentUserId, []);
-
-    while (queue.length > 0) {
-      const { id, path } = queue.shift()!;
-      const member = members.find(m => m.id === id);
-      if (!member) continue;
-
-      if (id === targetId) {
-        return describeKinshipPath(path, member);
-      }
-
-      for (const conn of member.connections) {
-        if (!visited.has(conn.toId)) {
-          const newPath = [...path, conn.type];
-          visited.set(conn.toId, newPath);
-          queue.push({ id: conn.toId, path: newPath });
-        }
-      }
-    }
-    return 'Blood Relation';
-  };
-
-  const describeKinshipPath = (path: RelationType[], target: FamilyMember): string => {
-    if (path.length === 0) return 'You';
-    
-    const isMale = target.gender === 'male';
-    const isFemale = target.gender === 'female';
-    
-    // Helper to add "Great" prefixes
-    const getGreatPrefix = (count: number) => {
-      if (count <= 0) return "";
-      if (count === 1) return "Great-";
-      return "Great-".repeat(count);
-    };
-
-    // Calculate depth changes
-    const up = path.filter(p => p === 'parent').length;
-    const down = path.filter(p => p === 'child').length;
-    const hasSibling = path.includes('sibling');
-    const hasSpouse = path.includes('spouse');
-
-    // 1. Direct Ancestry
-    if (!hasSibling && !hasSpouse && up > 0 && down === 0) {
-      if (up === 1) return isMale ? 'Father' : isFemale ? 'Mother' : 'Parent';
-      if (up === 2) return isMale ? 'Grandfather' : isFemale ? 'Grandmother' : 'Grandparent';
-      const greats = up - 2;
-      return `${getGreatPrefix(greats)}Grand${isMale ? 'father' : isFemale ? 'mother' : 'parent'}`;
-    }
-
-    // 2. Direct Descendancy
-    if (!hasSibling && !hasSpouse && down > 0 && up === 0) {
-      if (down === 1) return isMale ? 'Son' : isFemale ? 'Daughter' : 'Child';
-      if (down === 2) return isMale ? 'Grandson' : isFemale ? 'Granddaughter' : 'Grandchild';
-      const greats = down - 2;
-      return `${getGreatPrefix(greats)}Grand${isMale ? 'son' : isFemale ? 'daughter' : 'child'}`;
-    }
-
-    // 3. Collateral (Siblings, Nephews, Nieces)
-    if (hasSibling && up === 0) {
-      if (down === 0) return isMale ? 'Brother' : isFemale ? 'Sister' : 'Sibling';
-      if (down === 1) return isMale ? 'Nephew' : isFemale ? 'Niece' : 'Niece/Nephew';
-      const greats = down - 1;
-      return `${getGreatPrefix(greats)}Grand${isMale ? 'nephew' : isFemale ? 'niece' : 'niece/nephew'}`;
-    }
-
-    // 4. Aunts/Uncles
-    if (hasSibling && up > 0 && down === 0) {
-      if (up === 1) return isMale ? 'Uncle' : isFemale ? 'Aunt' : 'Aunt/Uncle';
-      const greats = up - 1;
-      return `${getGreatPrefix(greats)}Grand${isMale ? 'uncle' : isFemale ? 'aunt' : 'uncle/aunt'}`;
-    }
-
-    // 5. Cousins (Algorithmic)
-    if (up > 0 && down > 0) {
-      const commonDepth = Math.min(up, down);
-      const degree = commonDepth;
-      const removal = Math.abs(up - down);
-      
-      const ordinal = (n: number) => {
-        const s = ["th", "st", "nd", "rd"];
-        const v = n % 100;
-        return n + (s[(v - 20) % 10] || s[v] || s[0]);
-      };
-
-      const degreeStr = ordinal(degree);
-      const removalStr = removal === 0 ? "" : ` ${removal === 1 ? "Once" : removal === 2 ? "Twice" : removal + "x"} Removed`;
-      return `${degreeStr} Cousin${removalStr}`;
-    }
-
-    // 6. In-Laws / Spousal Logic
-    if (hasSpouse) {
-      if (path.length === 1) return isMale ? 'Husband' : isFemale ? 'Wife' : 'Spouse';
-      
-      // Determine base relation then append -in-law
-      if (path[path.length - 1] === 'spouse') {
-        const subRelation = describeKinshipPath(path.slice(0, -1), target);
-        if (subRelation === 'Son') return 'Son-in-law';
-        if (subRelation === 'Daughter') return 'Daughter-in-law';
-        if (subRelation === 'Brother') return 'Brother-in-law';
-        if (subRelation === 'Sister') return 'Sister-in-law';
-        if (subRelation === 'Father') return 'Father-in-law';
-        if (subRelation === 'Mother') return 'Mother-in-law';
-        return `${subRelation}-in-law`;
-      }
-      if (path[0] === 'spouse') {
-        const subRelation = describeKinshipPath(path.slice(1), target);
-        if (subRelation === 'Father') return 'Father-in-law';
-        if (subRelation === 'Mother') return 'Mother-in-law';
-        if (subRelation === 'Brother') return 'Brother-in-law';
-        if (subRelation === 'Sister') return 'Sister-in-law';
-        return `${subRelation}-in-law`;
-      }
-    }
-
-    return isMale ? 'Kinsman' : isFemale ? 'Kinswoman' : 'Kinsfolk';
+  const getRelativeRelationshipWrapper = (targetId: string): string => {
+    return getRelativeRelationship(targetId, currentUserId, members);
   };
 
   const legendItems = [
@@ -594,7 +492,7 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
             member={member} 
             isDragging={draggingNodeId === member.id || dragPairIds.includes(member.id)}
             isCurrentUser={member.id === currentUserId}
-            relativeRelation={getRelativeRelationship(member.id)}
+            relativeRelation={getRelativeRelationshipWrapper(member.id)}
             onNodeGrabStart={handleNodeGrabStart}
             onAdd={(parentId, type) => {
               const parent = members.find(m => m.id === parentId);
@@ -634,6 +532,16 @@ const TreeView: React.FC<TreeViewProps> = ({ members, setMembers, currentUserId 
         >
           <i className="fa-solid fa-user-plus text-lg"></i>
           <span className="absolute right-14 bg-stone-800 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">Drag to Place</span>
+        </button>
+
+        <button 
+          id="center-controls"
+          onClick={handleCenterOnUser}
+          className="w-12 h-12 bg-blue-500 shadow-xl rounded-full flex items-center justify-center text-white hover:bg-blue-600 transition-all hover:scale-110 active:scale-95 group relative"
+          title="Center on Me"
+        >
+          <i className="fa-solid fa-crosshairs text-lg"></i>
+          <span className="absolute right-14 bg-stone-800 text-white text-[10px] px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none shadow-xl">Center on Me</span>
         </button>
 
         <div className="flex flex-col gap-2 mt-4 bg-white/50 backdrop-blur-md p-1.5 rounded-2xl shadow-lg border border-stone-200">

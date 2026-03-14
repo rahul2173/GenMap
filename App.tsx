@@ -10,6 +10,7 @@ import SettingsPage from './components/SettingsPage';
 import NotificationsPage from './components/NotificationsPage';
 import TutorialGuide from './components/TutorialGuide';
 import { FamilyMember, TreeMembership } from './types';
+import { getRelativeRelationship } from './components/kinship';
 import { GoogleGenAI, Type } from "@google/genai";
 import { INITIAL_MEMBERS } from './data';
 
@@ -313,7 +314,7 @@ const VisualSearchModal = ({ members, onClose }: { members: FamilyMember[], onCl
   );
 };
 
-const HeaderSearch = ({ members }: { members: FamilyMember[] }) => {
+const HeaderSearch = ({ members, currentUserId }: { members: FamilyMember[], currentUserId: string }) => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [isVisualSearchOpen, setIsVisualSearchOpen] = useState(false);
@@ -383,7 +384,7 @@ const HeaderSearch = ({ members }: { members: FamilyMember[] }) => {
                     {member.firstName} {member.lastName}
                   </p>
                   <p className="text-[10px] uppercase font-semibold text-stone-400 tracking-tighter">
-                    {member.role}
+                    {getRelativeRelationship(member.id, currentUserId, members)}
                   </p>
                 </div>
                 <i className="fa-solid fa-chevron-right ml-auto text-[10px] text-stone-300 group-hover:text-amber-500 transition-colors"></i>
@@ -442,7 +443,7 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          <HeaderSearch members={members} />
+          <HeaderSearch members={members} currentUserId={currentUser.id} />
 
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
@@ -469,7 +470,7 @@ const App: React.FC = () => {
         <main className="flex-1 relative overflow-hidden ml-16 mt-16 h-full">
           <Routes>
             <Route path="/" element={<TreeView members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
-            <Route path="/profile/:id" element={<ProfilePage members={members} setMembers={setMembers} />} />
+            <Route path="/profile/:id" element={<ProfilePage members={members} setMembers={setMembers} currentUserId={currentUser.id} />} />
             <Route path="/social" element={<SocialFeed members={members} />} />
             <Route path="/messages" element={<Messaging members={members} />} />
             <Route path="/notifications" element={<NotificationsPage members={members} />} />

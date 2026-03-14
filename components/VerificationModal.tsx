@@ -1,16 +1,17 @@
 
 import React, { useState } from 'react';
-import { RelationType } from '../types';
+import { RelationType, GenderType } from '../types';
 
 interface VerificationModalProps {
   onClose: () => void;
-  onSubmit: (data: { firstName: string, lastName: string, channel: string }) => void;
+  onSubmit: (data: { firstName: string, lastName: string, gender: GenderType, channel: string }) => void;
   relationType: RelationType;
 }
 
 const VerificationModal: React.FC<VerificationModalProps> = ({ onClose, onSubmit, relationType }) => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [gender, setGender] = useState<GenderType>('other');
   const [channel, setChannel] = useState('email');
 
   return (
@@ -42,6 +43,21 @@ const VerificationModal: React.FC<VerificationModalProps> = ({ onClose, onSubmit
                 className="w-full bg-stone-100 border border-stone-200 rounded-lg px-3 py-2 outline-none focus:border-amber-400 focus:bg-white transition-all"
                 placeholder="Doe"
               />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-bold text-stone-500 mb-1 uppercase">Gender</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['male', 'female', 'other'] as GenderType[]).map(g => (
+                <button
+                  key={g}
+                  onClick={() => setGender(g)}
+                  className={`py-2 rounded-lg border text-[10px] font-bold uppercase transition-all ${gender === g ? 'bg-amber-100 border-amber-400 text-amber-800' : 'bg-white border-stone-200 text-stone-500 hover:bg-stone-50'}`}
+                >
+                  {g}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -82,7 +98,7 @@ const VerificationModal: React.FC<VerificationModalProps> = ({ onClose, onSubmit
         <div className="px-6 py-4 bg-stone-100 border-t border-stone-200 flex justify-end gap-3">
           <button onClick={onClose} className="px-4 py-2 text-stone-600 font-bold hover:text-stone-800 transition-colors">Cancel</button>
           <button 
-            onClick={() => onSubmit({ firstName, lastName, channel })}
+            onClick={() => onSubmit({ firstName, lastName, gender, channel })}
             disabled={!firstName || !lastName}
             className="px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
           >

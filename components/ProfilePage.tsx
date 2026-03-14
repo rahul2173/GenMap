@@ -2,13 +2,15 @@
 import React, { useState, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { FamilyMember, TreeMembership } from '../types';
+import { getRelativeRelationship } from './kinship';
 
 interface ProfilePageProps {
   members: FamilyMember[];
   setMembers: React.Dispatch<React.SetStateAction<FamilyMember[]>>;
+  currentUserId: string;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers }) => {
+const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentUserId }) => {
   const { id } = useParams();
   const navigate = useNavigate();
   const member = members.find(m => m.id === id);
@@ -90,12 +92,12 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers }) => {
             </div>
           </div>
 
-          <div className="flex-1 pb-2">
-            <div className="flex items-center gap-4 mb-2">
-              <h2 className="text-3xl font-bold text-emerald-800">{member.firstName} {member.lastName}</h2>
-              <span className="px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded-full border border-amber-200">{member.role}</span>
+          <div className="flex-1 min-w-0 pb-2">
+            <div className="flex flex-col items-start gap-2 mb-2">
+              <h2 className="text-3xl font-bold text-emerald-800 break-words">{member.firstName} {member.lastName}</h2>
+              <span className="px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded-full border border-amber-200 whitespace-nowrap shrink-0">{getRelativeRelationship(member.id, currentUserId, members)}</span>
             </div>
-            <p className="text-stone-500 max-w-xl italic leading-relaxed">"{member.bio || 'Preserving our history for the generations to come.'}"</p>
+            <p className="text-stone-500 max-w-xl italic leading-relaxed break-words">"{member.bio || 'Preserving our history for the generations to come.'}"</p>
           </div>
 
           <div className="flex gap-2">
@@ -152,7 +154,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers }) => {
                       <img src={target.avatar} className="w-12 h-12 rounded-full object-cover" />
                       <div>
                         <p className="text-sm font-bold text-stone-800">{target.firstName}</p>
-                        <p className="text-[10px] uppercase font-semibold text-emerald-600 tracking-tighter">{conn.type}</p>
+                        <p className="text-[10px] uppercase font-semibold text-emerald-600 tracking-tighter">{getRelativeRelationship(conn.toId, currentUserId, members)}</p>
                       </div>
                     </div>
                   );
@@ -187,7 +189,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers }) => {
                           <p className="text-[10px] font-mono text-stone-400 uppercase tracking-widest">{tree.code}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">{tree.role}</p>
+                          <p className="text-[10px] font-black text-emerald-600 uppercase tracking-tighter">{getRelativeRelationship(member.id, currentUserId, members)}</p>
                           <p className="text-[10px] text-stone-400 font-semibold">{tree.memberCount} Members</p>
                         </div>
                       </div>
