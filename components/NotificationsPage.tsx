@@ -148,7 +148,7 @@ const NotificationsPage: React.FC<NotificationsPageProps> = ({ members }) => {
                     <div className="flex items-center gap-3">
                       {notif.actionLabel && (
                         <button 
-                          onClick={() => notif.type === 'tree' ? navigate('/') : navigate('/social')}
+                          onClick={() => notif.type === 'tree' ? navigate('/app') : navigate('/social')}
                           className="px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-[10px] font-black uppercase tracking-widest rounded-lg hover:bg-emerald-600 hover:text-white transition-all"
                         >
                           {notif.actionLabel}

@@ -43,7 +43,21 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
     setSwitchingTo(treeId);
     setTimeout(() => {
       setSwitchingTo(null);
-      navigate('/');
+      navigate('/app');
+    }, 1500);
+  };
+
+  const [isConnectionModalOpen, setIsConnectionModalOpen] = useState(false);
+  const [connectionNote, setConnectionNote] = useState('');
+  const [isSendingRequest, setIsSendingRequest] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
+
+  const handleSendRequest = () => {
+    setIsSendingRequest(true);
+    setTimeout(() => {
+      setIsSendingRequest(false);
+      setIsConnectionModalOpen(false);
+      setRequestSent(true);
     }, 1500);
   };
 
@@ -57,10 +71,48 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
         accept="image/*"
       />
       
+      {/* Connection Request Modal */}
+      {isConnectionModalOpen && (
+        <div className="fixed inset-0 z-[200] bg-emerald-950/80 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-stone-900 rounded-3xl p-8 max-w-md w-full shadow-2xl animate-in zoom-in-95 duration-200">
+            <h3 className="text-2xl font-bold text-stone-800 dark:text-stone-100 mb-2">Connect with {member.firstName}</h3>
+            <p className="text-sm text-stone-500 mb-6">Send a request to view private memories and ancestral records.</p>
+            
+            <textarea 
+              className="w-full bg-stone-50 dark:bg-stone-800 border border-stone-200 dark:border-stone-700 rounded-xl p-4 text-sm outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20 transition-all resize-none h-32 mb-6 text-stone-800 dark:text-stone-200"
+              placeholder="Add an optional personal note..."
+              value={connectionNote}
+              onChange={(e) => setConnectionNote(e.target.value)}
+            />
+            
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsConnectionModalOpen(false)}
+                className="flex-1 py-3 px-4 rounded-xl font-bold text-xs uppercase tracking-widest text-stone-500 hover:bg-stone-100 dark:hover:bg-stone-800 transition-all"
+                disabled={isSendingRequest}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSendRequest}
+                disabled={isSendingRequest}
+                className="flex-1 py-3 px-4 bg-emerald-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-md flex items-center justify-center gap-2"
+              >
+                {isSendingRequest ? (
+                  <><i className="fa-solid fa-circle-notch fa-spin"></i> Sending...</>
+                ) : (
+                  'Send Request'
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Banner */}
       <div className="h-48 bg-emerald-600 relative">
         <button 
-          onClick={() => navigate('/')}
+          onClick={() => navigate('/app')}
           className="absolute top-6 left-6 w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center hover:bg-white/40 transition-all z-10"
         >
           <i className="fa-solid fa-arrow-left"></i>
@@ -94,7 +146,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
 
           <div className="flex-1 min-w-0 pb-2">
             <div className="flex flex-col items-start gap-2 mb-2">
-              <h2 className="text-3xl font-bold text-emerald-800 break-words">{member.firstName} {member.lastName}</h2>
+              <h2 className="text-3xl font-bold text-[#e79ff5] break-words">{member.firstName} {member.lastName}</h2>
               <span className="px-3 py-1 bg-amber-100 text-amber-800 text-[10px] font-black uppercase rounded-full border border-amber-200 whitespace-nowrap shrink-0">{getRelativeRelationship(member.id, currentUserId, members)}</span>
             </div>
             <p className="text-stone-500 max-w-xl italic leading-relaxed break-words">"{member.bio || 'Preserving our history for the generations to come.'}"</p>
@@ -107,7 +159,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
             <button className="w-12 h-12 flex items-center justify-center bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-all border border-stone-200">
               <i className="fa-solid fa-video"></i>
             </button>
-            <button className="w-12 h-12 flex items-center justify-center bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-all border border-stone-200">
+            <button onClick={() => navigate('/messages')} className="w-12 h-12 flex items-center justify-center bg-stone-100 text-stone-600 rounded-xl hover:bg-stone-200 transition-all border border-stone-200">
               <i className="fa-solid fa-message"></i>
             </button>
           </div>
@@ -150,7 +202,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
                   const target = members.find(m => m.id === conn.toId);
                   if (!target) return null;
                   return (
-                    <div key={conn.toId} className="flex items-center gap-3 p-3 rounded-xl border border-stone-100 hover:border-amber-200 hover:bg-amber-50 transition-all cursor-pointer">
+                    <div key={conn.toId} onClick={() => navigate(`/profile/${target.id}`)} className="flex items-center gap-3 p-3 rounded-xl border border-stone-100 hover:border-amber-200 hover:bg-amber-50 transition-all cursor-pointer">
                       <img src={target.avatar} className="w-12 h-12 rounded-full object-cover" />
                       <div>
                         <p className="text-sm font-bold text-stone-800">{target.firstName}</p>
@@ -228,8 +280,20 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ members, setMembers, currentU
               <p className="text-xs text-emerald-50 mb-6 leading-relaxed">
                 Send a connection request to view private memories, full contact details, and ancestral records.
               </p>
-              <button className="w-full py-3 bg-amber-400 text-emerald-950 font-black uppercase text-[10px] tracking-widest rounded-xl hover:bg-amber-300 transition-all shadow-lg">
-                Send Connection Request
+              <button 
+                onClick={() => !requestSent && setIsConnectionModalOpen(true)}
+                disabled={requestSent}
+                className={`w-full py-3 font-black uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-lg flex items-center justify-center gap-2 ${
+                  requestSent 
+                  ? 'bg-emerald-900/50 text-emerald-400 cursor-not-allowed' 
+                  : 'bg-amber-400 text-emerald-950 hover:bg-amber-300'
+                }`}
+              >
+                {requestSent ? (
+                  <><i className="fa-solid fa-check"></i> Request Sent</>
+                ) : (
+                  'Send Connection Request'
+                )}
               </button>
             </section>
 

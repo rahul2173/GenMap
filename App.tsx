@@ -454,6 +454,7 @@ const AppContent: React.FC = () => {
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
+                <img src="/logo.png" alt="GenMap Logo" className="h-6 w-auto" referrerPolicy="no-referrer" />
                 <span className="text-[10px] font-black tracking-[0.2em] text-emerald-600 dark:text-emerald-400">GENMAP</span>
                 <div className="w-px h-3 bg-stone-300 dark:bg-stone-700"></div>
                 <Link to="/app" className="text-xl font-bold text-emerald-700 dark:text-emerald-500 flex items-center gap-2">
@@ -461,7 +462,7 @@ const AppContent: React.FC = () => {
                   Sterling Family Legacy
                 </Link>
               </div>
-              <span className="text-[9px] text-stone-500 uppercase tracking-widest font-semibold ml-[72px]">Code: STRL-9921-X</span>
+              <span className="text-[9px] text-stone-500 uppercase tracking-widest font-semibold ml-[104px]">Code: STRL-9921-X</span>
             </div>
           </div>
 
@@ -477,13 +478,13 @@ const AppContent: React.FC = () => {
                 <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform duration-200 ${!isTreePrivate ? 'translate-x-6' : ''}`} />
               </button>
             </div>
-            <div className="flex items-center gap-3">
+            <Link to="/profile/1" className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer">
               <div className="text-right">
                 <p className="text-sm font-bold text-stone-800 dark:text-stone-200">{currentUser.firstName} {currentUser.lastName}</p>
                 <p className="text-xs text-stone-500">Account Owner</p>
               </div>
               <img src={currentUser.avatar} className="w-10 h-10 rounded-full border-2 border-amber-400 object-cover" />
-            </div>
+            </Link>
           </div>
         </header>
       )}

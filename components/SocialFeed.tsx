@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FamilyMember } from '../types';
 
 interface SocialFeedProps {
@@ -8,6 +9,7 @@ interface SocialFeedProps {
 
 const SocialFeed: React.FC<SocialFeedProps> = ({ members }) => {
   const [activeTab, setActiveTab] = useState<'feed' | 'events'>('feed');
+  const navigate = useNavigate();
 
   const stories = members.slice(0, 5).map(m => ({
     id: m.id,
@@ -40,7 +42,7 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ members }) => {
       {/* Stories Bar */}
       <div className="flex gap-4 overflow-x-auto pb-6 scrollbar-hide">
         {stories.map(story => (
-          <div key={story.id} className="flex flex-col items-center gap-1 cursor-pointer group min-w-[70px]">
+          <div key={story.id} onClick={() => navigate(`/profile/${story.id}`)} className="flex flex-col items-center gap-1 cursor-pointer group min-w-[70px]">
             <div className={`w-16 h-16 rounded-full p-1 border-2 transition-transform duration-300 group-hover:scale-105 ${story.hasUnseen ? 'border-amber-400' : 'border-stone-200'}`}>
               <img src={story.avatar} className="w-full h-full rounded-full object-cover" />
             </div>
@@ -93,9 +95,9 @@ const SocialFeed: React.FC<SocialFeedProps> = ({ members }) => {
               <div key={post.id} className="bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden">
                 <div className="p-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <img src={post.author.avatar} className="w-10 h-10 rounded-full object-cover" />
-                    <div>
-                      <p className="text-sm font-bold text-stone-800">{post.author.firstName} {post.author.lastName}</p>
+                    <img src={post.author.avatar} onClick={() => navigate(`/profile/${post.author.id}`)} className="w-10 h-10 rounded-full object-cover cursor-pointer" />
+                    <div onClick={() => navigate(`/profile/${post.author.id}`)} className="cursor-pointer">
+                      <p className="text-sm font-bold text-stone-800 hover:text-emerald-600 transition-colors">{post.author.firstName} {post.author.lastName}</p>
                       <p className="text-[10px] text-stone-400">{post.time}</p>
                     </div>
                   </div>

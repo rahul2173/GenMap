@@ -39,7 +39,7 @@ const SignupPage: React.FC = () => {
           </button>
         </form>
         <p className="mt-8 text-center text-stone-600 dark:text-stone-400 text-sm">
-          Already have an account? <Link to="/app" className="text-emerald-600 font-bold">Login</Link>
+          Already have an account? <Link to="/" className="text-emerald-600 font-bold">Login</Link>
         </p>
       </div>
     </div>

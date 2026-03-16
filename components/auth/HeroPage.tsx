@@ -4,10 +4,18 @@ import { Link } from 'react-router-dom';
 const HeroPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center waterfall-bg p-6">
-      <div className="max-w-2xl text-center bg-white/60 dark:bg-stone-900/60 backdrop-blur-md p-12 rounded-[3rem] border border-white/20 shadow-2xl">
-        <h1 className="text-7xl font-black text-stone-900 dark:text-stone-100 mb-6 tracking-tighter">
-          GenMap
-        </h1>
+      <div className="max-w-2xl text-center bg-white/60 dark:bg-stone-900/60 backdrop-blur-md p-12 rounded-[3rem] border border-white shadow-2xl">
+        <div className="relative inline-block mb-6">
+          <img 
+            src="/logo.png" 
+            alt="GenMap Logo" 
+            className="absolute right-full mr-4 top-1/2 -translate-y-1/2 h-20 w-auto" 
+            referrerPolicy="no-referrer"
+          />
+          <h1 className="text-7xl text-emerald-600 tracking-tighter times-new-roman">
+            GenMap
+          </h1>
+        </div>
         <p className="text-2xl font-bold text-stone-800 dark:text-stone-200 mb-2">
           Connect with your <span className="text-emerald-600">Family Legacy</span>
         </p>

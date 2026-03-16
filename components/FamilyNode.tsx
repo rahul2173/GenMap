@@ -189,7 +189,7 @@ const FamilyNode: React.FC<FamilyNodeProps> = ({ member, isDragging, isCurrentUs
 
           <div className="absolute -bottom-3 -right-3 pointer-events-none z-30">
             <button 
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => { e.stopPropagation(); navigate('/messages'); }}
               className={`w-9 h-9 rounded-full text-white flex items-center justify-center shadow-xl transition-all duration-300 pointer-events-auto active:scale-90 bg-emerald-700 ${getButtonScale(showTools)}`}
             >
               <i className="fa-solid fa-comment-dots text-xs"></i>
